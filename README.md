@@ -1,6 +1,5 @@
 # AI-Kinetic-Tiles
 
-# Energy Harvesting Smart Floor Tile System
 
 ## Overview
 This project demonstrates an energy harvesting system that captures mechanical energy from human footsteps using smart tiles and monitors the generated voltage using an ESP32 microcontroller.

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Live Energy Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #020617;
+  color: #e5e7eb;
+}
+
+header {
+  padding: 15px 30px;
+  background: #020617;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-between;
+}
+
+header a {
+  color: #38bdf8;
+  text-decoration: none;
+}
+
+.container {
+  padding: 30px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: #0f172a;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.card h3 {
+  margin: 0 0 10px;
+  color: #38bdf8;
+}
+
+.value {
+  font-size: 28px;
+}
+
+.chart-card {
+  height: 300px;
+}
+
+canvas {
+  width: 100% !important;
+  height: 220px !important;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>Live Tile Dashboard</h2>
+  <a href="index.html">← Back to Home</a>
+</header>
+
+<div class="container">
+
+  <div class="grid">
+
+    <div class="card">
+      <h3>Status</h3>
+      <div class="value" id="status">Waiting for ESP32...</div>
+    </div>
+
+    <div class="card">
+      <h3>Voltage</h3>
+      <div class="value" id="voltage">0.00 V</div>
+    </div>
+
+    <div class="card">
+      <h3>Energy (mJ)</h3>
+      <div class="value" id="energy">0</div>
+    </div>
+
+  </div>
+
+  <br>
+
+  <div class="card chart-card">
+    <h3>Voltage vs Time</h3>
+    <canvas id="chart"></canvas>
+  </div>
+
+</div>
+
+<script>
+const ESP32_URL = "http://10.229.194.56/data";
+
+let labels = [];
+let values = [];
+
+const chart = new Chart(document.getElementById("chart"), {
+  type: "line",
+  data: {
+    labels,
+    datasets: [{
+      label: "Voltage (V)",
+      data: values,
+      borderColor: "#38bdf8",
+      tension: 0.4,
+      pointRadius: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true
+      }
+    }
+  }
+});
+
+function fetchData() {
+  fetch(ESP32_URL)
+    .then(res => res.json())
+    .then(d => {
+      document.getElementById("voltage").innerText =
+        d.voltage.toFixed(2) + " V";
+
+      document.getElementById("energy").innerText =
+        (d.voltage * d.voltage * 100).toFixed(2);
+
+      document.getElementById("status").innerText =
+        "Live data received";
+
+      labels.push(new Date().toLocaleTimeString());
+      values.push(d.voltage);
+
+      if (labels.length > 15) {
+        labels.shift();
+        values.shift();
+      }
+
+      chart.options.scales.y.max = Math.max(...values) + 0.5;
+      chart.update();
+    })
+    .catch(() => {
+      document.getElementById("status").innerText =
+        "Waiting for ESP32...";
+    });
+}
+
+setInterval(fetchData, 1000);
+</script>
+
+</body>
+</html>
